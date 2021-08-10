@@ -26,11 +26,9 @@ var instructions = $('#recording-instructions');
 var notesList = $('ul#notes');
 
 var noteContent = '';
+var finalResult = '';
 
 // Get all notes from previous sessions and display them.
-var notes = getAllNotes();
-renderNotes(notes);
-
 
 
 function validate_letters_array(arr) {
@@ -55,44 +53,67 @@ function validate_letters(transcript) {
 // When true, the silence period is longer (about 15 seconds),
 // allowing us to keep recording even when the user pauses. 
 recognition.continuous = true;
-
+recognition.interimResults = true;
+var i = 0;
+for (i; i < 11; i++) {
+    setTimeout(function() { console.log(i); }, 4000);
+}
 // This block is called every time the Speech APi captures a line. 
+var final_transcript = " ";
 recognition.onresult = function(event) {
-
     // event is a SpeechRecognitionEvent object.
     // It holds all the lines we have captured so far. 
     // We only need the current one.
     var current = event.resultIndex;
+    var transcript = '';
+
 
     // Get a transcript of what was said.
-    var transcript = event.results[current][0].transcript.toUpperCase();
-    let transcript_arr = transcript.split(/[ ,]+/);
+    for (var i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+            final_transcript += event.results[i][0].transcript + "\n";
+        }
+        transcript += event.results[i][0].transcript;
+    }
+    // console.log("out ", transcript)
+    let transcript_arr = transcript.split(/[ ]+/);
     let filtered_transcript = validate_letters(transcript_arr);
-    transcript = filtered_transcript.join("");
+    transcript = filtered_transcript;
     if (transcript.length == 0) {
         instructions.text('I didnt recognize English letter. Please try again and speak only English Letters.');
         return;
     }
 
-    // let joined_transcript = transcript_arr.join("");
-    // let letters_transcript_arr = joined_transcript.split("");
-    // transcript = validate_letters_array(letters_transcript_arr).join(" ")
-    console.log(event);
-    // Add the current transcript to the contents of our Note.
-    // There is a weird bug on mobile, where everything is repeated twice.
-    // There is no official solution so far so we have to handle an edge case.
+    console.log("final_transcript", final_transcript)
+        // let joined_transcript = transcript_arr.join("");
+        // let letters_transcript_arr = joined_transcript.split("");
+        // transcript = validate_letters_array(letters_transcript_arr).join(" ")
+        // Add the current transcript to the contents of our Note.
+        // There is a weird bug on mobile, where everything is repeated twice.
+        // There is no official solution so far so we have to handle an edge case.
     var mobileRepeatBug = (current == 1 && transcript == event.results[0][0].transcript);
-
     if (!mobileRepeatBug) {
-        console.log("transcript: ");
-        console.log(transcript);
+        // console.log("transcript: ");
+        // console.log(transcript);
         // console.log(transcript_arr);
-        noteContent += transcript + '\n';
-        noteTextarea.val(noteContent);
+        noteContent = transcript;
+        var finalText = "";
+
+        noteContent.forEach(item => {
+            finalText += item
+        })
+        if (finalText.length) {
+            finalResult += finalText
+            noteTextarea.val(finalText);
+
+        }
+
     }
 };
 
+
 recognition.onstart = function() {
+
     instructions.text('Voice recognition activated. Try speaking into the microphone.');
 }
 
@@ -118,6 +139,11 @@ recognition.onnomatch = function(event) {
 /*-----------------------------
       App buttons and input 
 ------------------------------*/
+$("recognition.onresult").change(function() {
+
+    alert("Handler for .change() called.");
+});
+
 
 $('#start-record-btn').on('click', function(e) {
     document.getElementById("start-record-btn").innerHTML = "listening";
@@ -127,13 +153,13 @@ $('#start-record-btn').on('click', function(e) {
     }
 
     recognition.start();
+
 });
 $('#stop-record-btn').on('click', function(e) {
     document.getElementById("start-record-btn").innerHTML = "Press to speak";
     // alert(noteContent.length);
     recognition.stop();
 });
-
 
 
 $('#pause-record-btn').on('click', function(e) {
@@ -194,7 +220,6 @@ notesList.on('click', function(e) {
 
 function readOutLoud(message) {
     var speech = new SpeechSynthesisUtterance();
-
     // Set the text and voice attributes.
     speech.text = message;
     speech.volume = 1;
