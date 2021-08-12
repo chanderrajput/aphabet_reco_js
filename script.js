@@ -13,7 +13,7 @@ try {
     $('.app').hide();
 }
 
-var alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+var alphabets = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
 var alphabetsHTML = '';
 var hints = document.querySelector('.hints');
 alphabets.forEach(function(v, i, a) {
@@ -42,7 +42,7 @@ function validate_letters_array(arr) {
 }
 
 function validate_letters(transcript) {
-    return transcript.filter(e => e.length == 1)
+    return transcript.filter(e => e.length == 1 && alphabets.includes(e))
 }
 
 /*-----------------------------
@@ -54,10 +54,7 @@ function validate_letters(transcript) {
 // allowing us to keep recording even when the user pauses. 
 recognition.continuous = true;
 recognition.interimResults = true;
-var i = 0;
-for (i; i < 11; i++) {
-    setTimeout(function() { console.log(i); }, 4000);
-}
+
 // This block is called every time the Speech APi captures a line. 
 var final_transcript = " ";
 recognition.onresult = function(event) {
@@ -71,11 +68,10 @@ recognition.onresult = function(event) {
     // Get a transcript of what was said.
     for (var i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-            final_transcript += event.results[i][0].transcript + "\n";
+            final_transcript += event.results[i][0].transcript;
         }
         transcript += event.results[i][0].transcript;
     }
-    // console.log("out ", transcript)
     let transcript_arr = transcript.split(/[ ]+/);
     let filtered_transcript = validate_letters(transcript_arr);
     transcript = filtered_transcript;
@@ -84,18 +80,11 @@ recognition.onresult = function(event) {
         return;
     }
 
-    console.log("final_transcript", final_transcript)
-        // let joined_transcript = transcript_arr.join("");
-        // let letters_transcript_arr = joined_transcript.split("");
-        // transcript = validate_letters_array(letters_transcript_arr).join(" ")
-        // Add the current transcript to the contents of our Note.
-        // There is a weird bug on mobile, where everything is repeated twice.
-        // There is no official solution so far so we have to handle an edge case.
+    // Add the current transcript to the contents of our Note.
+    // There is a weird bug on mobile, where everything is repeated twice.
+    // There is no official solution so far so we have to handle an edge case.
     var mobileRepeatBug = (current == 1 && transcript == event.results[0][0].transcript);
     if (!mobileRepeatBug) {
-        // console.log("transcript: ");
-        // console.log(transcript);
-        // console.log(transcript_arr);
         noteContent = transcript;
         var finalText = "";
 
@@ -104,8 +93,7 @@ recognition.onresult = function(event) {
         })
         if (finalText.length) {
             finalResult += finalText
-            noteTextarea.val(finalText);
-
+            noteTextarea.val(finalText.toLowerCase());
         }
 
     }
